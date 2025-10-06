@@ -69,7 +69,7 @@ export default function Home() {
           try {
             await searchRecipe(val.search).unwrap();
           } catch (err) {
-            toast.error(err?.message || "Search failed");
+            toast.error(err?.message || "Search failed");  
           }
         }}
       >
