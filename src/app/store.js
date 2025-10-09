@@ -1,10 +1,18 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { mealsApi } from '../features/meals/mealsApi';
+import { configureStore } from "@reduxjs/toolkit";
+import { meatApi } from "../features/meals/meatApi";
+
+
+
+
 
 export const store = configureStore({
-  reducer: {
-    [mealsApi.reducerPath]: mealsApi.reducer,
+  reducer:{
+    [meatApi.reducerPath]:meatApi.reducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(mealsApi.middleware),
-});
+
+   middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat([
+      meatApi.middleware
+    ]),
+
+})
