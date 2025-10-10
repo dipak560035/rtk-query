@@ -30,6 +30,14 @@ endpoints: (builder) =>({
             i:detail
         }
        })
+    }),
+    getSearchFirstLetter:builder.query({
+        query:(abcd)=>({
+            url:'/search.php',
+            params:{
+                f:abcd
+            }
+        })
     })
 
 
@@ -37,4 +45,4 @@ endpoints: (builder) =>({
 })
 
 });
-export const {useGetCategoriesQuery,useGetFilterQuery,useGetMealByIdQuery}=meatApi;
+export const {useGetCategoriesQuery,useGetFilterQuery,useGetMealByIdQuery,useLazyGetSearchFirstLetterQuery}=meatApi;
