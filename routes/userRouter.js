@@ -1,8 +1,9 @@
 
 
 import express from 'express';
-import { loginUser, registerUser } from '../controllers/userController.js';
+import { getUser, loginUser, registerUser, updateProfile } from '../controllers/userController.js';
 import { notAllowed } from '../utils/notAllowed.js';
+import { checkUser } from '../middlewares/checkUser.js';
 
 const router = express.Router();
 
@@ -18,4 +19,8 @@ router
   .post(registerUser)
   .all(notAllowed);
 
+
+router.route('/api/users').get(checkUser, getUser).patch(checkUser, updateProfile).all(notAllowed);
+
+  
 export default router;
