@@ -12,11 +12,11 @@ import { checkAdmin, checkUser } from '../middlewares/checkUser.js';
 
 const router = express.Router();
 
-router.route('/api/products')
+router.route('/products')
   .get( getProducts)
   .post(checkUser,checkAdmin,checkFile, createProduct).all(notAllowed);
 
-router.route('/api/products/:id')
+router.route('/products/:id')
   .get(checkId,getProduct)
   .patch(checkId,updateCheckFile,updateProduct)
   .delete(checkId,deleteProduct).all(notAllowed);

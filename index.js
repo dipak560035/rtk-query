@@ -15,7 +15,7 @@ const port = 5000;
 
 dotenv.config();
 
-mongoose.connect('mongodb+srv://dipak:dipak123@cluster0.ysqeecm.mongodb.net/NewShop').then((val)=>{
+mongoose.connect(process.env.DB_URL).then((val)=>{
 app.listen(port, () => {
   console.log(`connected and Server is running on port ${port}`);
 });
@@ -23,10 +23,13 @@ app.listen(port, () => {
   console.log(err);
 });
 
-// Middleware
+//Middleware
 app.use(cors({
-  origin:[]
+  origin: ['https://mern-frontened.vercel.app','http://localhost:5173'],
+  credentials: true
 }));
+
+
 
 app.use(express.json()); 
 
