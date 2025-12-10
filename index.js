@@ -77,7 +77,10 @@ app.post('/send-email', async (req, res) => {
   }
 });
 // Use routers with base paths
-app.use(productRoutes);
-app.use(userRouter);
-app.use(orderRoutes);
+// app.use(productRoutes);
+// app.use(userRouter);
+// app.use(orderRoutes);
 
+app.use('/api', productRoutes);
+app.use('/api', userRouter);
+app.use('/api', orderRoutes);
