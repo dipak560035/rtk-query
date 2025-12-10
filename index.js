@@ -81,6 +81,16 @@ app.post('/send-email', async (req, res) => {
 // app.use(userRouter);
 // app.use(orderRoutes);
 
-app.use('/api', productRoutes);
-app.use('/api', userRouter);
-app.use('/api', orderRoutes);
+// app.use('/api', productRoutes);
+// app.use('/api', userRouter);
+// app.use('/api', orderRoutes);
+
+
+// app.use('/api/products', productRoutes); // product routes
+// app.use('/api/users', userRouter);       // user routes
+// app.use('/api/orders', orderRoutes);     // order routes
+
+
+app.use('/', productRoutes);
+app.use('/', userRouter);
+app.use('/', orderRoutes);
