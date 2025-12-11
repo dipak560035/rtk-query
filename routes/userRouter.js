@@ -9,18 +9,19 @@ const router = express.Router();
 
 // login route
 router
-  .route('/api/users/login')
+  .route('/login')
   .post(loginUser)
   .all(notAllowed);
 
 // register route
 router
-  .route('/api/users/register')
+  .route('/register')
   .post(registerUser)
   .all(notAllowed);
 
 
-router.route('/api/users').get(checkUser, getUser).patch(checkUser, updateProfile).all(notAllowed);
+router.route('/')
+.get(checkUser, getUser).patch(checkUser, updateProfile).all(notAllowed);
 
   
 export default router;

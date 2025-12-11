@@ -91,6 +91,25 @@ app.post('/send-email', async (req, res) => {
 // app.use('/api/orders', orderRoutes);     // order routes
 
 
-app.use('/', productRoutes);
-app.use('/', userRouter);
-app.use('/', orderRoutes);
+// app.use('/', productRoutes);
+// app.use('/', userRouter);
+// app.use('/', orderRoutes);
+
+
+// app.use('/api/products', productRoutes);
+// app.use('/api', productRoutes);
+// app.use('/api/users', userRouter);
+// app.use('/api/orders', orderRoutes);
+
+
+
+// Mount routers correctly
+
+// productRoutes uses "/products" inside → mount at "/api"
+app.use('/api', productRoutes);
+
+// userRoutes uses "/api/users" inside → mount at "/"
+app.use('/api/users', userRouter);
+
+// order routes — check what is inside (same rule)
+app.use('/api', orderRoutes);
