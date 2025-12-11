@@ -7,8 +7,8 @@ import { checkUser } from '../middlewares/checkUser.js';
 
 const router = express.Router();
 
-router.route('/api/orders').get(checkUser, getOrders).post(checkUser, createOrder).all(notAllowed);
-router.route('/api/orders/:id').get(getOrder).all(notAllowed);
+router.route('/').get(checkUser, getOrders).post(checkUser, createOrder).all(notAllowed);
+router.route('/:id').get(getOrder).all(notAllowed);
 
 
 export default router;
