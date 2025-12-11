@@ -112,4 +112,6 @@ app.use('/api', productRoutes);
 app.use('/api/users', userRouter);
 
 // order routes — check what is inside (same rule)
-app.use('/api', orderRoutes);
+// app.use('/api/orders', orderRoutes);
+
+app.use(orderRoutes);
