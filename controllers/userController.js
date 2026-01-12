@@ -21,7 +21,7 @@ export const getUser = async (req, res) => {
   }
 }
 
-export const updateProfile = async (req, res) => {
+export const updateUser = async (req, res) => {
   const { email, username } = req.body ?? {};
   try {
     const isExist = await User.findById(req.userId);
