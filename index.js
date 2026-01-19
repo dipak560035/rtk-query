@@ -140,11 +140,11 @@ mongoose
 // ===================
 
 // CORS setup — allow localhost + Vercel frontend
-app.use('/uploads', (req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Cross-Origin-Resource-Policy", "cross-origin");
-  next();
-});
+// app.use('/uploads', (req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header("Cross-Origin-Resource-Policy", "cross-origin");
+//   next();
+// });
 
 // app.use(
 //   cors({
@@ -155,6 +155,18 @@ app.use('/uploads', (req, res, next) => {
 //     credentials: true,
 //   })
 // );
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://mern-frontened-git-ui-dipak560035s-projects.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+
+// Handle OPTIONS preflight for all routes
+
 
 app.use(express.json());
 app.use(cookieParser()); // required for cookies
