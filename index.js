@@ -140,15 +140,21 @@ mongoose
 // ===================
 
 // CORS setup — allow localhost + Vercel frontend
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173", // local dev
-      "https://mern-frontened-git-ui-dipak560035s-projects.vercel.app", // Vercel frontend
-    ],
-    credentials: true,
-  })
-);
+app.use('/uploads', (req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+});
+
+// app.use(
+//   cors({
+//     origin: [
+//       "http://localhost:5173", // local dev
+//       "https://mern-frontened-git-ui-dipak560035s-projects.vercel.app", // Vercel frontend
+//     ],
+//     credentials: true,
+//   })
+// );
 
 app.use(express.json());
 app.use(cookieParser()); // required for cookies
