@@ -3,9 +3,6 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 
-
-
-
 export const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');
