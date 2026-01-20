@@ -3,51 +3,40 @@
 import Product, { brands, categories } from "../models/Product.js";
 import fs, { unlink } from "fs";
 
-// ✅ Get all products
-export const getProducts = async (req, res) => {
+// ✅ Get all productsexport const getProducts = async (req, res) => {
+  export const getProducts = async (req, res) => {
   try {
-  //   const products = await Product.find({}).sort('price');
-  // return res.status(200).json({
-  //   status:'success',
-  //   products
-  //  });
-  // }
-
-
-    const exludedFields = ['page', 'limit', 'sort', 'fields', 'skip', 'search'];
+    const excludedFields = ['page', 'limit', 'sort', 'fields', 'skip', 'search'];
     let queryObj = { ...req.query };
 
-    exludedFields.forEach((val) => {
-      delete queryObj[val];
-    })
+    excludedFields.forEach(val => delete queryObj[val]);
 
-
-
+    // --- 🔍 SEARCH HANDLING FIX
     if (req.query.search) {
-      const searchText = req.query.search;
+      const searchText = req.query.search.toLowerCase();
 
+      const isCategory = Array.isArray(categories) &&
+        categories.some(name => name.toLowerCase() === searchText);
 
-      if (categories.some((name) => name.toLowerCase() === searchText.toLowerCase())) {
-        queryObj.category = { $regex: searchText, $options: 'i' };
+      const isBrand = Array.isArray(brands) &&
+        brands.some(name => name.toLowerCase() === searchText);
 
-      } else if (brands.some((name) => name.toLowerCase() === searchText.toLowerCase())) {
-        queryObj.brand = { $regex: searchText, $options: 'i' };
+      if (isCategory) {
+        queryObj.category = { $regex: searchText, $options: "i" };
+      } else if (isBrand) {
+        queryObj.brand = { $regex: searchText, $options: "i" };
       } else {
-        queryObj.title = { $regex: searchText, $options: 'i' };
+        queryObj.title = { $regex: searchText, $options: "i" };
       }
-
-
     }
 
-    // { 'rating[gt]': '4' }
-    // {rating: {$gt: 4}}
+    // --- 🧱 ADVANCED FILTERING FIX
     const output = Object.entries(queryObj).reduce((acc, [key, value]) => {
-      const match = key.match(/^(.+)\[(.+)\]$/);  // <-- FIXED REGEX
+      const match = key.match(/^(.+)\[(.+)\]$/);
       if (match) {
         const field = match[1];
         const operator = `$${match[2]}`;
         const parsedValue = isNaN(value) ? value : Number(value);
-
         acc[field] = { [operator]: parsedValue };
       } else {
         acc[key] = value;
@@ -55,41 +44,129 @@ export const getProducts = async (req, res) => {
       return acc;
     }, {});
 
-    console.log(output);
     let query = Product.find(output);
 
+    // --- 📦 SORT
     if (req.query.sort) {
       const sortBy = req.query.sort.split(',').join(' ');
       query = query.sort(sortBy);
     }
 
+    // --- 🎯 FIELD SELECT
     if (req.query.fields) {
       const fields = req.query.fields.split(',').join(' ');
       query = query.select(fields);
     }
 
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
-    const skip = (page - 1) * 10;
+    // --- 📄 PAGINATION FIX
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
 
-    const total = await Product.countDocuments();
+    // --- 🧮 TOTAL SHOULD MATCH FILTER
+    const total = await Product.countDocuments(output);
     const products = await query.skip(skip).limit(limit);
 
     return res.status(200).json({
-      status: 'success',
+      status: "success",
       total,
+      totalPages: Math.ceil(total / limit),
       products,
-     totalPages: Math.ceil(total / limit)
     });
 
-
   } catch (err) {
+    console.error("GET PRODUCTS ERROR:", err); // DEBUG
     return res.status(400).json({
-      status: 'error',
-      message: err.message
+      status: "error",
+      message: err.message,
     });
   }
 };
+
+// export const getProducts = async (req, res) => {
+//   try {
+ 
+
+
+//     const exludedFields = ['page', 'limit', 'sort', 'fields', 'skip', 'search'];
+//     let queryObj = { ...req.query };
+
+//     exludedFields.forEach((val) => {
+//       delete queryObj[val];
+//     })
+
+
+
+//     if (req.query.search) {
+//       const searchText = req.query.search;
+
+
+//       if (categories.some((name) => name.toLowerCase() === searchText.toLowerCase())) {
+//         queryObj.category = { $regex: searchText, $options: 'i' };
+
+//       } else if (brands.some((name) => name.toLowerCase() === searchText.toLowerCase())) {
+//         queryObj.brand = { $regex: searchText, $options: 'i' };
+//       } else {
+//         queryObj.title = { $regex: searchText, $options: 'i' };
+//       }
+
+
+//     }
+
+//     // { 'rating[gt]': '4' }
+//     // {rating: {$gt: 4}}
+//     const output = Object.entries(queryObj).reduce((acc, [key, value]) => {
+//       const match = key.match(/^(.+)\[(.+)\]$/);  // <-- FIXED REGEX
+//       if (match) {
+//         const field = match[1];
+//         const operator = `$${match[2]}`;
+//         const parsedValue = isNaN(value) ? value : Number(value);
+
+//         acc[field] = { [operator]: parsedValue };
+//       } else {
+//         acc[key] = value;
+//       }
+//       return acc;
+//     }, {});
+
+//     console.log(output);
+//     let query = Product.find(output);
+
+//     if (req.query.sort) {
+//       const sortBy = req.query.sort.split(',').join(' ');
+//       query = query.sort(sortBy);
+//     }
+
+//     if (req.query.fields) {
+//       const fields = req.query.fields.split(',').join(' ');
+//       query = query.select(fields);
+//     }
+
+//     // const page = req.query.page || 1;
+//     // const limit = req.query.limit*2 || 30;
+//     // const skip = (page - 1) * 10;
+//     const page = Number(req.query.page) || 1;
+//     const limit = Number(req.query.limit) || 50; 
+//     const skip = (page - 1) * limit;
+
+//     const total = await Product.countDocuments();
+//     const products = await query.skip(skip).limit(limit);
+
+//     return res.status(200).json({
+//       status: 'success',
+//       total,
+//       products,
+//      totalPages: Math.ceil(total / limit)
+//     });
+
+
+//   } catch (err) {
+//     return res.status(400).json({
+//       status: 'error',
+//       message: err.message
+//     });
+//   }
+// };
 
 
 
