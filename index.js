@@ -116,7 +116,7 @@ import cors from "cors";
 import fileUpload from "express-fileupload";
 import nodemailer from "nodemailer";
 import cookieParser from "cookie-parser";
-
+import fs from "fs";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -125,8 +125,13 @@ import orderRoutes from "./routes/orderRoutes.js";
 
 dotenv.config();
 const app = express();
-const port = process.env.PORT || 5000;
 
+const port = process.env.PORT || 5000;
+const uploadsDir = "./uploads";
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+  console.log("✅ Created uploads folder");
+}
 // ===================
 // MongoDB connection
 // ===================
@@ -135,26 +140,7 @@ mongoose
   .then(() => console.log("✅ Connected to MongoDB (NepalShop)"))
   .catch((err) => console.error("MongoDB connection error:", err.message));
 
-// ===================
-// Middleware
-// ===================
 
-// CORS setup — allow localhost + Vercel frontend
-// app.use('/uploads', (req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header("Cross-Origin-Resource-Policy", "cross-origin");
-//   next();
-// });
-
-// app.use(
-//   cors({
-//     origin: [
-//       "http://localhost:5173", // local dev
-//       "https://mern-frontened-git-ui-dipak560035s-projects.vercel.app", // Vercel frontend
-//     ],
-//     credentials: true,
-//   })
-// );
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -170,8 +156,22 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser()); // required for cookies
-app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } }));
-app.use(express.static("uploads"));
+// app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } }));
+// app.use(fileUpload({
+//   useTempFiles: true,
+//   tempFileDir: '/tmp/',
+//   limits: { fileSize: 5 * 1024 * 1024 }
+// }));
+app.use(fileUpload({
+  createParentPath: true, // automatically creates folder if needed
+  limits: { fileSize: 5 * 1024 * 1024 },
+  abortOnLimit: true,
+}));
+
+
+// app.use(express.static("uploads"));
+app.use("/uploads", express.static("uploads"));
+
 
 // ===================
 // Nodemailer setup
