@@ -158,7 +158,7 @@ mongoose
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://https://mern-frontened-git-ui-dipak560035s-projects.vercel.app"
+    "https://mern-frontened-git-ui-dipak560035s-projects.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
