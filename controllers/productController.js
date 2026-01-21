@@ -225,8 +225,8 @@ export const updateProduct = async (req, res) => {
       try {
         if (product.image) fs.unlinkSync(`./uploads/${product.image}`);
       } catch {}
-
-      product.image = `uploads/${req.imagePath}`;
+product.image = req.imagePath;
+      // product.image = `uploads/${req.imagePath}`;
     }
 
     await product.save();
