@@ -170,7 +170,7 @@ app.use(fileUpload({
 
 
 // app.use(express.static("uploads"));
-app.use("/uploads", express.static("uploads"));
+app.use(express.static('uploads'));
 
 
 // ===================

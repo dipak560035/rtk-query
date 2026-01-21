@@ -172,7 +172,7 @@ export const createProduct = async (req, res) => {
       category: category.trim(),
       brand: brand.trim(),
       stock: Number(stock),
-      image: `uploads/${req.imagePath}`,
+      image: req.imagePath,
       
     });
 

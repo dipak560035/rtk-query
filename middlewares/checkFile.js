@@ -84,6 +84,7 @@ import fs from "fs";
 const supportedExts = [".png", ".jpg", ".jpeg", ".gif"];
 
 export const checkFile = (req, res, next) => {
+  console.log('hello jee');
   const file = req.files?.image;
 
   if (!file) {
