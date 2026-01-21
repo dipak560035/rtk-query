@@ -68,7 +68,7 @@ app.use(cors({
     "http://localhost:5173",
     "https://mern-frontened-git-ui-dipak560035s-projects.vercel.app"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
