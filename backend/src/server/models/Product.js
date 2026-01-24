@@ -14,7 +14,7 @@ const productSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true, lowercase: true },
     description: { type: String },
     price: { type: Number, required: true },
-    currency: { type: String, default: 'INR' },
+    currency: { type: String, default: 'NPR' },
     category: { type: String, index: true },
     tags: [{ type: String, index: true }],
     stock: { type: Number, default: 0 },
