@@ -31,11 +31,12 @@ export async function createProduct(req, res, next) {
 
 export async function getProducts(req, res, next) {
   try {
-    const { q, category, minPrice, maxPrice, sort = 'createdAt', order = 'desc', page = 1, limit = 20, tag } = req.query
+    const { q, category, minPrice, maxPrice, sort = 'createdAt', order = 'desc', page = 1, limit = 20, tag, featured } = req.query
     const filter = {}
     if (q) filter.$text = { $search: q }
     if (category) filter.category = category
     if (tag) filter.tags = tag
+    if (typeof featured !== 'undefined') filter.featured = featured === 'true' || featured === true
     if (minPrice || maxPrice) {
       filter.price = {}
       if (minPrice) filter.price.$gte = Number(minPrice)
@@ -87,4 +88,3 @@ export async function deleteProduct(req, res, next) {
     next(err)
   }
 }
-
