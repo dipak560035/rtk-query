@@ -54,6 +54,31 @@ export async function getOrderById(req, res, next) {
   }
 }
 
+export async function cancelOrder(req, res, next) {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id })
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' })
+
+    // Prevent cancelling after shipped/delivered (optional rule)
+    if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
+      return res.status(400).json({ success: false, message: `Cannot cancel ${order.status} order` })
+    }
+
+    order.status = 'cancelled'
+    await order.save()
+
+    // Restore product stock
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } })
+    }
+
+    res.json({ success: true, message: 'Order cancelled', data: order })
+  } catch (err) {
+    next(err)
+  }
+}
+
+
 export async function adminGetAllOrders(req, res, next) {
   try {
     const orders = await Order.find().sort({ createdAt: -1 })
