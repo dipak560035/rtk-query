@@ -77,7 +77,7 @@ export async function updateProduct(req, res, next) {
   } catch (err) {
     next(err)
   }
-} //
+} 
 
 export async function deleteProduct(req, res, next) {
   try {
