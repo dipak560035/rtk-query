@@ -19,14 +19,19 @@ router.post(
   createProduct
 )
 
+// router.put(
+//   '/:id',
+//   requireAuth,
+//   requireAdmin,
+//   upload.array('images', 6),
+//   runValidation([param('id').isMongoId()]),
+//   updateProduct
+// )
 router.put(
-  '/:id',
-  requireAuth,
-  requireAdmin,
-  upload.array('images', 6),
-  runValidation([param('id').isMongoId()]),
+  "/admin/products/:id",
+  upload.array("images", 5),
   updateProduct
-)
+);
 
 router.delete('/:id', requireAuth, requireAdmin, runValidation([param('id').isMongoId()]), deleteProduct)
 

@@ -1,6 +1,7 @@
 import slugify from 'slugify'
 import { Product } from '../models/Product.js'
-
+import fs from "fs";
+import path from "path";
 export async function createProduct(req, res, next) {
   try {
     const { name, description, price, category, tags, stock, colors, sizes, featured } = req.body
@@ -64,20 +65,54 @@ export async function getProductById(req, res, next) {
   }
 }
 
+
+
 export async function updateProduct(req, res, next) {
   try {
-    const updates = { ...req.body }
-    if (updates.name) updates.slug = slugify(updates.name, { lower: true })
-    if (req.files && req.files.length) {
-      updates.$push = { images: { $each: req.files.map((f) => ({ url: `/uploads/${f.filename}`, alt: updates.name || '' })) } }
+    // 1️⃣ Fetch existing product
+    const existingProduct = await Product.findById(req.params.id);
+    if (!existingProduct) {
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
-    const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true })
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' })
-    res.json({ success: true, data: product })
+
+    const updates = { ...req.body };
+
+    // 2️⃣ Update slug if name changes
+    if (updates.name) {
+      updates.slug = slugify(updates.name, { lower: true });
+    }
+
+    // 3️⃣ Replace images if new ones uploaded
+    if (req.files && req.files.length > 0) {
+      // 🧹 Delete old images safely
+      existingProduct.images.forEach((img) => {
+        const filename = img.url.replace("/uploads/", "");
+        const filePath = path.join(process.cwd(), "uploads", filename);
+
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      });
+
+      // 📸 Save new images
+      updates.images = req.files.map((file) => ({
+        url: `/uploads/${file.filename}`,
+        alt: updates.name || existingProduct.name,
+      }));
+    }
+
+    // 4️⃣ Update product
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true }
+    );
+
+    res.json({ success: true, data: updatedProduct });
   } catch (err) {
-    next(err)
+    next(err);
   }
-} 
+}
 
 export async function deleteProduct(req, res, next) {
   try {
