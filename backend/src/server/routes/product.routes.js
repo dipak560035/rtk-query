@@ -19,19 +19,26 @@ router.post(
   createProduct
 )
 
-// router.put(
-//   '/:id',
-//   requireAuth,
-//   requireAdmin,
-//   upload.array('images', 6),
-//   runValidation([param('id').isMongoId()]),
-//   updateProduct
-// )
+
 router.put(
-  "/admin/products/:id",
-  upload.array("images", 5),
+  '/:id',
+  requireAuth,
+  requireAdmin,
+  upload.array('images', 6),
+  runValidation([param('id').isMongoId()]),
   updateProduct
-);
+)
+
+// Alias POST to PUT for user convenience
+router.post(
+  '/:id',
+  requireAuth,
+  requireAdmin,
+  upload.array('images', 6),
+  runValidation([param('id').isMongoId()]),
+  updateProduct
+)
+
 
 router.delete('/:id', requireAuth, requireAdmin, runValidation([param('id').isMongoId()]), deleteProduct)
 
