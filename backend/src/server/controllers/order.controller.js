@@ -1,134 +1,341 @@
-// import { User } from '../models/User.js'
-// import { Order } from '../models/Order.js'
+
+
+// import { Cart } from '../models/cart.js'
+// import Order from '../models/Order.js'
 // import { Product } from '../models/Product.js'
 
-// export async function placeOrder(req, res, next) {
+// export const placeOrder = async (req, res) => {
 //   try {
-//     const user = await User.findById(req.user._id).populate('cart.product')
-//     const bodyItems = Array.isArray(req.body.items) ? req.body.items : []
-//     if (!user.cart.length && !bodyItems.length) {
-//       return res.status(400).json({ success: false, message: 'Cart is empty' })
+//     const cart = await Cart.findOne({ user: req.user._id })
+//       .populate('items.product')
+
+//     if (!cart || cart.items.length === 0) {
+//       return res.status(400).json({ message: 'Cart is empty' })
 //     }
+
 //     let total = 0
-//     let items = []
-//     if (user.cart.length) {
-//       items = user.cart.map((i) => {
-//         total += i.qty * i.price
-//         return {
-//           product: i.product._id,
-//           name: i.product.name,
-//           price: i.price,
-//           qty: i.qty,
-//           image: i.product.images?.[0]?.url || ''
-//         }
-//       })
-//     } else {
-//       const productIds = bodyItems.map((i) => i.product)
-//       const products = await Product.find({ _id: { $in: productIds } })
-//       const map = new Map(products.map((p) => [String(p._id), p]))
-//       for (const i of bodyItems) {
-//         const p = map.get(String(i.product))
-//         if (!p) {
-//           return res.status(400).json({ success: false, message: 'Invalid product in order items' })
-//         }
-//         if (i.qty > p.stock) {
-//           return res.status(400).json({ success: false, message: 'Insufficient stock for one or more products' })
-//         }
-//         total += Number(i.qty) * Number(p.price)
-//         items.push({
-//           product: p._id,
-//           name: p.name,
-//           price: p.price,
-//           qty: Number(i.qty),
-//           image: p.images?.[0]?.url || ''
+//     const items = []
+
+//     for (const item of cart.items) {
+//       const product = item.product
+
+//       if (item.qty > product.stock) {
+//         return res.status(400).json({
+//           message: `Not enough stock for ${product.name}`
 //         })
 //       }
+
+//       total += product.price * item.qty
+
+//       items.push({
+//         product: product._id,
+//         name: product.name,
+//         price: product.price,
+//         qty: item.qty,
+//         image: product.images?.[0]?.url || ''
+//       })
 //     }
+
 //     const order = await Order.create({
-//       user: user._id,
+//       user: req.user._id,
 //       items,
 //       total,
 //       shippingAddress: req.body.shippingAddress || {}
 //     })
-//     if (user.cart.length) {
-//       for (const i of user.cart) {
-//         await Product.findByIdAndUpdate(i.product, { $inc: { stock: -i.qty } })
-//       }
-//       user.cart = []
-//       await user.save()
-//     } else {
-//       for (const i of items) {
-//         await Product.findByIdAndUpdate(i.product, { $inc: { stock: -i.qty } })
-//       }
+
+//     // reduce stock
+//     for (const item of cart.items) {
+//       await Product.findByIdAndUpdate(item.product._id, {
+//         $inc: { stock: -item.qty }
+//       })
 //     }
+
+//     cart.items = []
+//     await cart.save()
+
 //     res.status(201).json({ success: true, data: order })
 //   } catch (err) {
-//     next(err)
+//     res.status(500).json({ message: err.message })
 //   }
 // }
 
-// export async function getMyOrders(req, res, next) {
-//   try {
-//     const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 })
-//     res.json({ success: true, data: orders })
-//   } catch (err) {
-//     next(err)
-//   }
+// /* ================= USER ================= */
+
+// export const getMyOrders = async (req, res) => {
+//   const orders = await Order.find({ user: req.user._id })
+//     .sort({ createdAt: -1 })
+
+//   res.json({ success: true, data: orders })
 // }
 
-// export async function getOrderById(req, res, next) {
-//   try {
-//     const order = await Order.findOne({ _id: req.params.id, user: req.user._id })
-//     if (!order) return res.status(404).json({ success: false, message: 'Order not found' })
-//     res.json({ success: true, data: order })
-//   } catch (err) {
-//     next(err)
+// export const getOrderById = async (req, res) => {
+//   const order = await Order.findOne({
+//     _id: req.params.id,
+//     user: req.user._id
+//   })
+
+//   if (!order) {
+//     return res.status(404).json({ message: 'Order not found' })
 //   }
+
+//   res.json({ success: true, data: order })
 // }
 
-// export async function cancelOrder(req, res, next) {
-//   try {
-//     const order = await Order.findOne({ _id: req.params.id, user: req.user._id })
-//     if (!order) return res.status(404).json({ success: false, message: 'Order not found' })
+// export const cancelOrder = async (req, res) => {
+//   const order = await Order.findOne({
+//     _id: req.params.id,
+//     user: req.user._id
+//   })
 
-//     // Prevent cancelling after shipped/delivered (optional rule)
-//     if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
-//       return res.status(400).json({ success: false, message: `Cannot cancel ${order.status} order` })
+//   if (!order) {
+//     return res.status(404).json({ message: 'Order not found' })
+//   }
+
+//   if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
+//     return res.status(400).json({
+//       message: `Cannot cancel ${order.status} order`
+//     })
+//   }
+
+//   order.status = 'cancelled'
+//   await order.save()
+
+//   for (const item of order.items) {
+//     await Product.findByIdAndUpdate(item.product, {
+//       $inc: { stock: item.qty }
+//     })
+//   }
+
+//   res.json({ success: true, message: 'Order cancelled' })
+// }
+
+// /* ================= ADMIN ================= */
+
+// // export const adminGetAllOrders = async (req, res) => {
+// //   const orders = await Order.find()
+// //     .populate('user', 'name email')
+// //     .sort({ createdAt: -1 })
+
+// //   res.json({ success: true, data: orders })
+// // }
+// export const adminGetAllOrders = async (req, res) => {
+//   const orders = await Order.find()
+//     .populate('user', 'name email phone')
+//     .sort({ createdAt: -1 })
+
+//   res.json({ success: true, data: orders })
+// }
+
+
+// export const adminUpdateOrderStatus = async (req, res) => {
+//   const order = await Order.findByIdAndUpdate(
+//     req.params.id,
+//     { status: req.body.status },
+//     { new: true }
+//   )
+
+//   if (!order) {
+//     return res.status(404).json({ message: 'Order not found' })
+//   }
+
+//   res.json({ success: true, data: order })
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { Cart } from '../models/cart.js'
+// import Order from '../models/Order.js'
+// import { Product } from '../models/Product.js'
+
+
+// /* ================= USER ================= */
+
+// // Place a new order
+// export const placeOrder = async (req, res) => {
+//   try {
+//     const cart = await Cart.findOne({ user: req.user._id }).populate(
+//       "items.product"
+//     );
+
+//     if (!cart || cart.items.length === 0) {
+//       return res.status(400).json({ message: "Cart is empty" });
 //     }
 
-//     order.status = 'cancelled'
-//     await order.save()
+//     let total = 0;
+//     const items = [];
 
-//     // Restore product stock
+//     for (const item of cart.items) {
+//       const product = item.product;
+
+//       if (!product) {
+//         return res
+//           .status(400)
+//           .json({ message: `Product not found in cart` });
+//       }
+
+//       if (item.qty > product.stock) {
+//         return res.status(400).json({
+//           message: `Not enough stock for ${product.name}`,
+//         });
+//       }
+
+//       total += product.price * item.qty;
+
+//       items.push({
+//         product: product._id,
+//         name: product.name,
+//         price: product.price,
+//         qty: item.qty,
+//         image: product.images?.[0]?.url || "",
+//       });
+//     }
+
+//     const order = await Order.create({
+//       user: req.user._id,
+//       items,
+//       total,
+//       shippingAddress: req.body.shippingAddress || {},
+//     });
+
+//     // Reduce stock
+//     for (const item of cart.items) {
+//       await Product.findByIdAndUpdate(item.product._id, {
+//         $inc: { stock: -item.qty },
+//       });
+//     }
+
+//     // Clear cart
+//     cart.items = [];
+//     await cart.save();
+
+//     res.status(201).json({ success: true, data: order });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// // Get all orders of logged-in user
+// export const getMyOrders = async (req, res) => {
+//   try {
+//     const orders = await Order.find({ user: req.user._id })
+//       .sort({ createdAt: -1 })
+//       .populate("items.product", "name price images");
+
+//     res.json({ success: true, data: orders });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// // Get order by ID for logged-in user
+// export const getOrderById = async (req, res) => {
+//   try {
+//     const order = await Order.findOne({
+//       _id: req.params.id,
+//       user: req.user._id,
+//     }).populate("items.product", "name price images");
+
+//     if (!order) {
+//       return res.status(404).json({ message: "Order not found" });
+//     }
+
+//     res.json({ success: true, data: order });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// // Cancel order
+// export const cancelOrder = async (req, res) => {
+//   try {
+//     const order = await Order.findOne({
+//       _id: req.params.id,
+//       user: req.user._id,
+//     });
+
+//     if (!order) {
+//       return res.status(404).json({ message: "Order not found" });
+//     }
+
+//     if (["shipped", "delivered", "cancelled"].includes(order.status)) {
+//       return res.status(400).json({
+//         message: `Cannot cancel ${order.status} order`,
+//       });
+//     }
+
+//     order.status = "cancelled";
+//     await order.save();
+
+//     // Restore stock
 //     for (const item of order.items) {
-//       await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } })
+//       await Product.findByIdAndUpdate(item.product, {
+//         $inc: { stock: item.qty },
+//       });
 //     }
 
-//     res.json({ success: true, message: 'Order cancelled', data: order })
+//     res.json({ success: true, message: "Order cancelled" });
 //   } catch (err) {
-//     next(err)
+//     res.status(500).json({ message: err.message });
 //   }
-// }
+// };
 
+// /* ================= ADMIN ================= */
 
-// export async function adminGetAllOrders(req, res, next) {
+// // Get all orders (Admin)
+// export const adminGetAllOrders = async (req, res) => {
 //   try {
-//     const orders = await Order.find().sort({ createdAt: -1 })
-//     res.json({ success: true, data: orders })
-//   } catch (err) {
-//     next(err)
-//   }
-// }
+//     const orders = await Order.find()
+//       .populate("user", "name email phone")
+//       .populate("items.product", "name price images")
+//       .sort({ createdAt: -1 });
 
-// export async function adminUpdateOrderStatus(req, res, next) {
+//     res.json({ success: true, data: orders });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// // Update order status (Admin)
+// export const adminUpdateOrderStatus = async (req, res) => {
 //   try {
-//     const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true })
-//     if (!order) return res.status(404).json({ success: false, message: 'Order not found' })
-//     res.json({ success: true, data: order })
+//     const { status } = req.body;
+
+//     if (!["pending", "paid", "processing", "shipped", "delivered", "cancelled"].includes(status)) {
+//       return res.status(400).json({ message: "Invalid status" });
+//     }
+
+//     const order = await Order.findByIdAndUpdate(
+//       req.params.id,
+//       { status },
+//       { new: true }
+//     ).populate("user", "name email phone")
+//      .populate("items.product", "name price images");
+
+//     if (!order) {
+//       return res.status(404).json({ message: "Order not found" });
+//     }
+
+//     res.json({ success: true, data: order });
 //   } catch (err) {
-//     next(err)
+//     res.status(500).json({ message: err.message });
 //   }
-// }
+// };
 
 
 
@@ -162,135 +369,288 @@
 
 
 
-import { Order } from '../models/Order.js'
-import { Cart } from '../models/cart.js'
+
+
+
+
+
+
+import { Cart } from '../models/cart.js';
+import Order from '../models/Order.js'
 import { Product } from '../models/Product.js'
+
+/* ================= USER ================= */
+
+// Place a new order
+
 
 export const placeOrder = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user._id })
-      .populate('items.product')
+    const userId = req.user._id;
 
+    // Fetch user's cart
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: 'Cart is empty' })
+      return res.status(400).json({ message: "Cart is empty" });
     }
 
-    let total = 0
-    const items = []
+    let total = 0;
+    const items = [];
 
     for (const item of cart.items) {
-      const product = item.product
-
-      if (item.qty > product.stock) {
-        return res.status(400).json({
-          message: `Not enough stock for ${product.name}`
-        })
+      const product = item.product;
+      if (!product) {
+        return res.status(400).json({ message: `Product not found in cart` });
       }
 
-      total += product.price * item.qty
+      if (item.qty > product.stock) {
+        return res.status(400).json({ message: `Not enough stock for ${product.name}` });
+      }
+
+      total += product.price * item.qty;
 
       items.push({
         product: product._id,
         name: product.name,
         price: product.price,
         qty: item.qty,
-        image: product.images?.[0]?.url || ''
-      })
+        image: product.images?.[0]?.url || "",
+      });
     }
 
+    // Validate shippingAddress
+    const shipping = req.body.shippingAddress;
+    if (
+      !shipping ||
+      !shipping.firstName ||
+      !shipping.lastName ||
+      !shipping.address ||
+      !shipping.city ||
+      !shipping.phone
+    ) {
+      return res.status(400).json({ message: "Missing required shipping address fields" });
+    }
+
+    // Create order
     const order = await Order.create({
-      user: req.user._id,
+      user: userId,
       items,
       total,
-      shippingAddress: req.body.shippingAddress || {}
-    })
+      shippingAddress: {
+        firstName: shipping.firstName,
+        lastName: shipping.lastName,
+        phone: shipping.phone,
+        line1: shipping.address,
+        line2: shipping.province || "",
+        city: shipping.city,
+        state: shipping.province || "",
+        postalCode: shipping.zip || "",
+        country: shipping.country || "",
+        email: shipping.email || "",
+      },
+      paymentMethod: req.body.paymentMethod || "bank",
+    });
 
-    // reduce stock
+    // Reduce stock
     for (const item of cart.items) {
-      await Product.findByIdAndUpdate(item.product._id, {
-        $inc: { stock: -item.qty }
-      })
+      await Product.findByIdAndUpdate(item.product._id, { $inc: { stock: -item.qty } });
     }
 
-    cart.items = []
-    await cart.save()
+    // Clear cart
+    cart.items = [];
+    await cart.save();
 
-    res.status(201).json({ success: true, data: order })
+    return res.status(201).json({ success: true, data: order });
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    console.error("Place order error:", err);
+    return res.status(500).json({ message: "Internal server error", error: err.message });
   }
-}
+};
 
-/* ================= USER ================= */
+// export const placeOrder = async (req, res) => {
+//   try {
+//     const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
 
+//     if (!cart || cart.items.length === 0) {
+//       return res.status(400).json({ message: "Cart is empty" });
+//     }
+
+//     let total = 0;
+//     const items = [];
+
+//     for (const item of Cart.items) {
+//       const product = item.product;
+
+//       if (!product) {
+//         return res.status(400).json({ message: `Product not found in cart` });
+//       }
+
+//       if (item.qty > product.stock) {
+//         return res.status(400).json({ message: `Not enough stock for ${product.name}` });
+//       }
+
+//       total += product.price * item.qty;
+
+//       items.push({
+//         product: product._id,
+//         name: product.name,
+//         price: product.price,
+//         qty: item.qty,
+//         image: product.images?.[0]?.url || "",
+//       });
+//     }
+
+//     // Validate and map shippingAddress fields
+//     const { shippingAddress, paymentMethod } = req.body;
+
+//     if (
+//       !shippingAddress ||
+//       !shippingAddress.firstName ||
+//       !shippingAddress.lastName ||
+//       !shippingAddress.address ||
+//       !shippingAddress.city ||
+//       !shippingAddress.phone
+//     ) {
+//       return res.status(400).json({ message: "Missing required shipping address fields" });
+//     }
+
+//     const order = await Order.create({
+//       user: req.user._id,
+//       items,
+//       total,
+//       shippingAddress: {
+//         firstName: shippingAddress.firstName,
+//         lastName: shippingAddress.lastName,
+//         phone: shippingAddress.phone,
+//         line1: shippingAddress.address,
+//         line2: shippingAddress.province || "",
+//         city: shippingAddress.city,
+//         state: shippingAddress.province || "",
+//         postalCode: shippingAddress.zip || "",
+//         country: shippingAddress.country || "",
+//         email: shippingAddress.email || "",
+//       },
+//       paymentMethod: paymentMethod || "bank",
+//     });
+
+//     // Reduce stock for each product
+//     for (const item of cart.items) {
+//       await Product.findByIdAndUpdate(item.product._id, {
+//         $inc: { stock: -item.qty },
+//       });
+//     }
+
+//     // Clear user's cart
+//     cart.items = [];
+//     await cart.save();
+
+//     res.status(201).json({ success: true, data: order });
+//   } catch (err) {
+//     console.error("Place order error:", err);
+//     res.status(500).json({ message: "Internal server error", error: err.message });
+//   }
+// };
+
+// Get all orders of logged-in user
 export const getMyOrders = async (req, res) => {
-  const orders = await Order.find({ user: req.user._id })
-    .sort({ createdAt: -1 })
+  try {
+    const orders = await Order.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate("items.product", "name price images");
 
-  res.json({ success: true, data: orders })
-}
+    res.json({ success: true, data: orders });
+  } catch (err) {
+    console.error("Get my orders error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
 
+// Get a single order by ID
 export const getOrderById = async (req, res) => {
-  const order = await Order.findOne({
-    _id: req.params.id,
-    user: req.user._id
-  })
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    }).populate("items.product", "name price images");
 
-  if (!order) {
-    return res.status(404).json({ message: 'Order not found' })
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    res.json({ success: true, data: order });
+  } catch (err) {
+    console.error("Get order by ID error:", err);
+    res.status(500).json({ message: err.message });
   }
+};
 
-  res.json({ success: true, data: order })
-}
-
+// Cancel an order
 export const cancelOrder = async (req, res) => {
-  const order = await Order.findOne({
-    _id: req.params.id,
-    user: req.user._id
-  })
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
 
-  if (!order) {
-    return res.status(404).json({ message: 'Order not found' })
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (["shipped", "delivered", "cancelled"].includes(order.status)) {
+      return res.status(400).json({ message: `Cannot cancel ${order.status} order` });
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    // Restore stock
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } });
+    }
+
+    res.json({ success: true, message: "Order cancelled successfully" });
+  } catch (err) {
+    console.error("Cancel order error:", err);
+    res.status(500).json({ message: err.message });
   }
-
-  if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
-    return res.status(400).json({
-      message: `Cannot cancel ${order.status} order`
-    })
-  }
-
-  order.status = 'cancelled'
-  await order.save()
-
-  for (const item of order.items) {
-    await Product.findByIdAndUpdate(item.product, {
-      $inc: { stock: item.qty }
-    })
-  }
-
-  res.json({ success: true, message: 'Order cancelled' })
-}
+};
 
 /* ================= ADMIN ================= */
 
+// Get all orders for admin
 export const adminGetAllOrders = async (req, res) => {
-  const orders = await Order.find()
-    .populate('user', 'name email')
-    .sort({ createdAt: -1 })
+  try {
+    const orders = await Order.find()
+      .populate("user", "name email phone")
+      .populate("items.product", "name price images")
+      .sort({ createdAt: -1 });
 
-  res.json({ success: true, data: orders })
-}
-
-export const adminUpdateOrderStatus = async (req, res) => {
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { status: req.body.status },
-    { new: true }
-  )
-
-  if (!order) {
-    return res.status(404).json({ message: 'Order not found' })
+    res.json({ success: true, data: orders });
+  } catch (err) {
+    console.error("Admin get all orders error:", err);
+    res.status(500).json({ message: err.message });
   }
+};
 
-  res.json({ success: true, data: order })
-}
+// Update order status (admin)
+export const adminUpdateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid order status" });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    )
+      .populate("user", "name email phone")
+      .populate("items.product", "name price images");
+
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    res.json({ success: true, data: order });
+  } catch (err) {
+    console.error("Admin update order status error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
