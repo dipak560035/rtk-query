@@ -2,6 +2,7 @@ import slugify from 'slugify'
 import { Product } from '../models/Product.js'
 import fs from "fs";
 import path from "path";
+const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next)
 export async function createProduct(req, res, next) {
   try {
     const { name, description, price, category, tags, stock, colors, sizes, featured } = req.body
@@ -123,3 +124,23 @@ export async function deleteProduct(req, res, next) {
     next(err)
   }
 }
+
+export const addProductReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body
+  const product = await Product.findById(req.params.id)
+  if (!product) return res.status(404).json({ success: false, message: 'Product not found' })
+  const alreadyReviewed = product.reviews?.some((r) => String(r.user) === String(req.user._id))
+  if (alreadyReviewed) return res.status(400).json({ success: false, message: 'Product already reviewed' })
+  const review = {
+    user: req.user._id,
+    name: req.user.name,
+    rating: Number(rating),
+    comment
+  }
+  product.reviews = [...(product.reviews || []), review]
+  product.numReviews = product.reviews.length
+  const avg = product.reviews.reduce((acc, r) => acc + Number(r.rating || 0), 0) / product.numReviews
+  product.rating = Math.round(avg * 10) / 10
+  await product.save()
+  res.status(201).json({ success: true, data: { review }, meta: { rating: product.rating, numReviews: product.numReviews } })
+})
