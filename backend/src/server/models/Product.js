@@ -2,8 +2,7 @@ import mongoose from 'mongoose'
 
 const imageSchema = new mongoose.Schema(
   {
-    url: { type: String, required: true },
-    alt: { type: String }
+    url: { type: String, required: true }
   },
   { _id: false }
 )

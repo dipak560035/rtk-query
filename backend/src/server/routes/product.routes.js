@@ -14,7 +14,7 @@ router.post(
   '/',
   requireAuth,
   requireAdmin,
-  upload.array('images', 6),
+  upload.array('images', 5),
   runValidation([body('name').notEmpty(), body('price').isFloat({ gt: 0 })]),
   createProduct
 )
@@ -24,7 +24,7 @@ router.put(
   '/:id',
   requireAuth,
   requireAdmin,
-  upload.array('images', 6),
+  upload.array('images', 5),
   runValidation([param('id').isMongoId()]),
   updateProduct
 )
@@ -34,13 +34,15 @@ router.post(
   '/:id',
   requireAuth,
   requireAdmin,
-  upload.array('images', 6),
+  upload.array('images', 5),
   runValidation([param('id').isMongoId()]),
   updateProduct
 )
 
 
 router.delete('/:id', requireAuth, requireAdmin, runValidation([param('id').isMongoId()]), deleteProduct)
+
+
 router.post(
   '/:id/reviews',
   requireAuth,

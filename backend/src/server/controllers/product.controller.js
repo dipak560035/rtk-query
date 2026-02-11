@@ -7,11 +7,12 @@ export async function createProduct(req, res, next) {
   try {
     const { name, description, price, category, tags, stock, colors, sizes, featured } = req.body
     const slug = slugify(name, { lower: true })
-    const images =
-      (req.files || []).map((f) => ({
-        url: `/uploads/${f.filename}`,
-        alt: name
-      })) || []
+
+    // Extract files from req.files and map to images array
+    const images = (req.files || []).map((file) => ({
+      url: `/uploads/${file.filename}`
+    }))
+
     const product = await Product.create({
       name,
       slug,
@@ -25,6 +26,7 @@ export async function createProduct(req, res, next) {
       images,
       featured: featured === 'true' || featured === true
     })
+
     res.status(201).json({ success: true, data: product })
   } catch (err) {
     next(err)
@@ -68,52 +70,140 @@ export async function getProductById(req, res, next) {
 
 
 
+// export async function updateProduct(req, res, next) {
+//   try {
+//     const existingProduct = await Product.findById(req.params.id)
+//     if (!existingProduct) {
+//       return res.status(404).json({ success: false, message: 'Product not found' })
+//     }
+
+//     const updates = { ...req.body }
+
+//     // Update slug if name changes
+//     if (updates.name) {
+//       updates.slug = slugify(updates.name, { lower: true })
+//     }
+
+//     // Replace images if new ones uploaded
+//     if (req.files && req.files.length > 0) {
+//       // 1. Delete old images from disk
+//       if (existingProduct.images && existingProduct.images.length > 0) {
+//         existingProduct.images.forEach((img) => {
+//           const filename = img.url.replace('/uploads/', '')
+//           const filePath = path.join(process.cwd(), 'uploads', filename)
+//           if (fs.existsSync(filePath)) {
+//             try {
+//               fs.unlinkSync(filePath)
+//             } catch (err) {
+//               console.error(`Failed to delete old image: ${filePath}`, err)
+//             }
+//           }
+//         })
+//       }
+
+
+      // 2. Map new files to images array
+//       updates.images = req.files.map((file) => ({
+//         url: `/uploads/${file.filename}`
+//       }))
+//     } else {
+//       // If no new files, keep existing images (don't overwrite updates.images)
+//       delete updates.images
+//     }
+
+//     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updates, { new: true })
+
+//     res.json({ success: true, data: updatedProduct })
+//   } catch (err) {
+//     next(err)
+//   }
+// }
+
+
+
+
 export async function updateProduct(req, res, next) {
   try {
-    // 1️⃣ Fetch existing product
-    const existingProduct = await Product.findById(req.params.id);
+    const existingProduct = await Product.findById(req.params.id)
     if (!existingProduct) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(404).json({ success: false, message: 'Product not found' })
     }
 
-    const updates = { ...req.body };
+    const updates = { ...req.body }
 
-    // 2️⃣ Update slug if name changes
+    // Update slug if name changes
     if (updates.name) {
-      updates.slug = slugify(updates.name, { lower: true });
+      updates.slug = slugify(updates.name, { lower: true })
     }
 
-    // 3️⃣ Replace images if new ones uploaded
-    if (req.files && req.files.length > 0) {
-      // 🧹 Delete old images safely
-      existingProduct.images.forEach((img) => {
-        const filename = img.url.replace("/uploads/", "");
-        const filePath = path.join(process.cwd(), "uploads", filename);
+    // 1. Determine which images to keep (from existing ones)
+    let finalImages = []
+    let imagesToKeep = []
 
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
+    if (req.body.existingImages) {
+      try {
+        // Parse the list of image URLs that should be kept
+        const parsedExisting = typeof req.body.existingImages === 'string'
+          ? JSON.parse(req.body.existingImages)
+          : req.body.existingImages
+
+        // Ensure we only keep images that actually belonged to this product
+        imagesToKeep = existingProduct.images.filter(img =>
+          parsedExisting.some(keep => (typeof keep === 'string' ? keep === img.url : keep.url === img.url))
+        )
+      } catch (err) {
+        console.error('Error parsing existingImages:', err)
+        imagesToKeep = existingProduct.images // Fallback to keeping all if parse fails
+      }
+    } else if (req.files && req.files.length > 0) {
+      // If new files are uploaded but NO existingImages list provided, 
+      // we assume the user wants to keep the current ones and add new ones
+      // (Common behavior for simple "add more" UI)
+      imagesToKeep = existingProduct.images
+    } else {
+      // No new files and no existingImages list -> keep everything
+      imagesToKeep = existingProduct.images
+    }
+
+    // 2. Delete images from disk that are NOT in the keep list
+    const imagesToDelete = existingProduct.images.filter(
+      img => !imagesToKeep.some(keep => keep.url === img.url)
+    )
+
+    imagesToDelete.forEach((img) => {
+      const filename = img.url.replace('/uploads/', '')
+      const filePath = path.join(process.cwd(), 'uploads', filename)
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath)
+        } catch (err) {
+          console.error(`Failed to delete old image: ${filePath}`, err)
         }
-      });
+      }
+    })
 
-      // 📸 Save new images
-      updates.images = req.files.map((file) => ({
-        url: `/uploads/${file.filename}`,
-        alt: updates.name || existingProduct.name,
-      }));
+    // 3. Add new uploaded images
+    let newImages = []
+    if (req.files && req.files.length > 0) {
+      newImages = req.files.map((file) => ({
+        url: `/uploads/${file.filename}`
+      }))
     }
 
-    // 4️⃣ Update product
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true }
-    );
+    // 4. Combine kept images and new uploads
+    finalImages = [...imagesToKeep, ...newImages]
+    
+    // Limit to 5 images total (safety check)
+    updates.images = finalImages.slice(0, 5)
 
-    res.json({ success: true, data: updatedProduct });
+    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updates, { new: true })
+
+    res.json({ success: true, data: updatedProduct })
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
+
 
 export async function deleteProduct(req, res, next) {
   try {
