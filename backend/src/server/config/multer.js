@@ -9,31 +9,15 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    // 🔥 Delete old images BEFORE saving new ones
-    if (req.params.id) {
-      const product = await Product.findById(req.params.id);
-      if (product?.images?.length) {
-        product.images.forEach((img) => {
-          const filename = img.url.replace("/uploads/", "");
-          const filePath = path.join(process.cwd(), "uploads", filename);
-
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          }
-        });
-      }
-    }
-
-    cb(null, "uploads/");
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/')
   },
 
   filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
-    cb(null, uniqueName);
-  },
-});
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname)
+    cb(null, uniqueName)
+  }
+})
 
 function fileFilter(req, file, cb) {
   if (/image\/(png|jpg|jpeg|webp)$/i.test(file.mimetype)) cb(null, true)
