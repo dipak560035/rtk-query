@@ -70,58 +70,6 @@ export async function getProductById(req, res, next) {
 
 
 
-// export async function updateProduct(req, res, next) {
-//   try {
-//     const existingProduct = await Product.findById(req.params.id)
-//     if (!existingProduct) {
-//       return res.status(404).json({ success: false, message: 'Product not found' })
-//     }
-
-//     const updates = { ...req.body }
-
-//     // Update slug if name changes
-//     if (updates.name) {
-//       updates.slug = slugify(updates.name, { lower: true })
-//     }
-
-//     // Replace images if new ones uploaded
-//     if (req.files && req.files.length > 0) {
-//       // 1. Delete old images from disk
-//       if (existingProduct.images && existingProduct.images.length > 0) {
-//         existingProduct.images.forEach((img) => {
-//           const filename = img.url.replace('/uploads/', '')
-//           const filePath = path.join(process.cwd(), 'uploads', filename)
-//           if (fs.existsSync(filePath)) {
-//             try {
-//               fs.unlinkSync(filePath)
-//             } catch (err) {
-//               console.error(`Failed to delete old image: ${filePath}`, err)
-//             }
-//           }
-//         })
-//       }
-
-
-      // 2. Map new files to images array
-//       updates.images = req.files.map((file) => ({
-//         url: `/uploads/${file.filename}`
-//       }))
-//     } else {
-//       // If no new files, keep existing images (don't overwrite updates.images)
-//       delete updates.images
-//     }
-
-//     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updates, { new: true })
-
-//     res.json({ success: true, data: updatedProduct })
-//   } catch (err) {
-//     next(err)
-//   }
-// }
-
-
-
-
 export async function updateProduct(req, res, next) {
   try {
     const existingProduct = await Product.findById(req.params.id)

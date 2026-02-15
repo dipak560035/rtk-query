@@ -18,7 +18,8 @@ const app = express()
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  'http://localhost:5180'
+  'http://localhost:5180',
+  "https://mern-frontened-git-figma-design-dipak560035s-projects.vercel.app"
 ].filter(Boolean)
 
 app.use(
