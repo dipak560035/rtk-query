@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 const {
   signup,
   signin,
@@ -22,48 +23,11 @@ router.post('/forgot-password', asyncHandler(forgotPassword));
 
 //Reset password routes for backend + browser
 router.get('/reset-password/:token', (req, res) => {
-  const token = req.params.token;
-
-  res.send(`
-  <html>
-    <head>
-      <title>Reset Password</title>
-      <style>
-        body { font-family: Arial; padding:40px; background:#f4f4f4; }
-        form { max-width:400px; margin:auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
-        input, button { padding:10px; width:100%; margin-top:10px; }
-        #showPassword { width: auto; padding: 10px; margin-top: 5px; cursor: pointer; background:#ddd; border:none; border-radius:4px; }
-        button[type="submit"] { background:#4CAF50; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-        button[type="submit"]:hover { background:#45a049; }
-      </style>
-    </head>
-    <body>
-      <h2 style="text-align:center;">Reset Password</h2>
-      <form method="POST" action="/api/auth/reset-password/${token}">
-        <input type="password" id="password" name="password" placeholder="Enter new password" required />
-        <button type="button" id="showPassword">Show Password</button>
-        <button type="submit">Reset Password</button>
-      </form>
-
-      <script>
-        const passwordInput = document.getElementById('password');
-        const toggleBtn = document.getElementById('showPassword');
-
-        toggleBtn.addEventListener('click', (e) => {
-          e.preventDefault(); // prevent form submission
-          if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            toggleBtn.textContent = 'Hide Password';
-          } else {
-            passwordInput.type = 'password';
-            toggleBtn.textContent = 'Show Password';
-          }
-        });
-      </script>
-    </body>
-  </html>
-  `);
+  res.sendFile(
+    path.join(__dirname, '../views/resetPassword.html')
+  );
 });
+
 
 // POST route to handle form submission from browser
 router.post('/reset-password/:token', asyncHandler(resetPassword));
