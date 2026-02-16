@@ -78,52 +78,52 @@ const runTests = async () => {
     };
 
     try {
-        // 1. Signup
+        //  Signup
         console.log('\n1. Testing Signup...');
         const signupRes = await makeRequest('/api/auth/signup', 'POST', testUser);
         console.log(`Status: ${signupRes.statusCode}`);
         console.log('Body:', signupRes.body);
         if (signupRes.statusCode === 201 && signupRes.headers['set-cookie']) {
-            console.log('✅ Signup Passed: User created and cookies set.');
+            console.log(' Signup Passed: User created and cookies set.');
             console.log('Cookies:', signupRes.headers['set-cookie']);
         } else {
-            console.log('❌ Signup Failed');
+            console.log(' Signup Failed');
         }
 
-        // 2. Access Protected Route (Me)
+        // Access Protected Route (Me)
         console.log('\n2. Testing Protected Route (/me)...');
         const meRes = await makeRequest('/api/auth/me', 'GET');
         console.log(`Status: ${meRes.statusCode}`);
         console.log('Body:', meRes.body);
         if (meRes.statusCode === 200 && meRes.body.email === testUser.email) {
-            console.log('✅ Protected Route Passed');
+            console.log('Protected Route Passed');
         } else {
-            console.log('❌ Protected Route Failed');
+            console.log(' Protected Route Failed');
         }
 
-        // 3. Logout
+        //  Logout
         console.log('\n3. Testing Logout...');
         const logoutRes = await makeRequest('/api/auth/logout', 'POST');
         console.log(`Status: ${logoutRes.statusCode}`);
         if (logoutRes.statusCode === 200) {
-            console.log('✅ Logout Passed');
+            console.log('Logout Passed');
             // Clear local cookies helper for next test (simulation)
             cookies = [];
         } else {
-            console.log('❌ Logout Failed');
+            console.log(' Logout Failed');
         }
 
-        // 4. Access Protected Route after Logout (Should Fail)
+        //  Access Protected Route after Logout (Should Fail)
         console.log('\n4. Testing Protected Route after Logout...');
         const failRes = await makeRequest('/api/auth/me', 'GET');
         console.log(`Status: ${failRes.statusCode}`);
         if (failRes.statusCode === 401) {
-            console.log('✅ Blocked Access Passed');
+            console.log('Blocked Access Passed');
         } else {
-            console.log('❌ Blocked Access Failed (Expected 401)');
+            console.log(' Blocked Access Failed (Expected 401)');
         }
 
-        // 5. Signin
+        // Signin
         console.log('\n5. Testing Signin...');
         const signinRes = await makeRequest('/api/auth/signin', 'POST', {
             email: testUser.email,
@@ -137,13 +137,13 @@ const runTests = async () => {
             console.log('❌ Signin Failed');
         }
 
-        // 6. Access Protected Route again
+        // Access Protected Route again
         console.log('\n6. Testing Protected Route after Signin...');
         const meRes2 = await makeRequest('/api/auth/me', 'GET');
         if (meRes2.statusCode === 200) {
-            console.log('✅ Protected Route (2) Passed');
+            console.log(' Protected Route (2) Passed');
         } else {
-            console.log('❌ Protected Route (2) Failed');
+            console.log(' Protected Route (2) Failed');
         }
 
         console.log('\n--- Verification Completed ---');

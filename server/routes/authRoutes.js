@@ -18,15 +18,13 @@ const asyncHandler = fn => (req, res, next) => {
   });
 };
 
-// --------------------
 // Public routes
-// --------------------
 router.post('/signup', asyncHandler(signup));
 router.post('/signin', asyncHandler(signin));
 router.post('/logout', asyncHandler(logout));
 router.post('/forgot-password', asyncHandler(forgotPassword));
 
-// --- Reset password routes for backend + browser ---
+//Reset password routes for backend + browser
 router.get('/reset-password/:token', (req, res) => {
   const token = req.params.token;
 
@@ -77,9 +75,8 @@ router.post('/reset-password/:token', asyncHandler(resetPassword));
 // PUT route to handle API/Postman requests
 router.put('/reset-password/:token', asyncHandler(resetPassword));
 
-// --------------------
+
 // Protected routes
-// --------------------
 router.get('/me', protect, asyncHandler(async (req, res) => {
   res.status(200).json(req.user);
 }));

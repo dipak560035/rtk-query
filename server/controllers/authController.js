@@ -7,7 +7,7 @@ const { setTokensCookies, clearTokensCookies } = require("../utils/cookieHelper"
 const { sendResetPasswordEmail } = require("../services/emailService");
 const bcrypt = require("bcryptjs");
 
-// ================= SIGNUP =================
+// SIGNUP 
 const signup = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -36,7 +36,7 @@ const signup = async (req, res) => {
   }
 };
 
-// ================= SIGNIN =================
+//SIGNIN
 const signin = async (req, res) => {
   const { email, password } = req.body;
 
@@ -70,7 +70,7 @@ const signin = async (req, res) => {
   }
 };
 
-// ================= LOGOUT =================
+//LOGOUT
 const logout = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (refreshToken) await Token.deleteOne({ token: refreshToken });
@@ -78,7 +78,7 @@ const logout = async (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-// ================= FORGOT PASSWORD =================
+// FORGOT PASSWORD 
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: "Email is required" });
@@ -103,37 +103,7 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// ================= RESET PASSWORD =================
-// const resetPassword = async (req, res) => {
-//   const { password } = req.body;
-//   if (!password) return res.status(400).send("<h3>New password is required</h3>");
-
-//   const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
-
-//   try {
-//     const user = await User.findOne({
-//       resetPasswordToken,
-//       resetPasswordExpires: { $gt: Date.now() },
-//     });
-
-//     if (!user) return res.status(400).send("<h3>Invalid or expired token</h3>");
-
-//     user.password = await bcrypt.hash(password, 10);
-//     user.resetPasswordToken = undefined;
-//     user.resetPasswordExpires = undefined;
-
-//     await user.save();
-
-//     if (req.headers["content-type"] === "application/x-www-form-urlencoded") {
-//       res.send("<h3>Password updated successfully! You can now login.</h3>");
-//     } else {
-//       res.status(200).json({ message: "Password updated successfully" });
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).send("<h3>Server error</h3>");
-//   }
-// };
+// RESET PASSWORD
 const resetPassword = async (req, res) => {
   const { password } = req.body;
   if (!password) return res.status(400).send('<h3>New password is required</h3>');
