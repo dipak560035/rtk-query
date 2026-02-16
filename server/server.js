@@ -18,6 +18,8 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -34,5 +36,6 @@ app.get('/', (req, res) => {
 // Error middleware
 app.use(notFound);
 app.use(errorHandler);
+
 
 app.listen(port, () => console.log(`Server started on port ${port}`));

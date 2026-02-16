@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const {
@@ -9,18 +8,15 @@ const {
   resetPassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
-
-// Async wrapper to catch errors
-const asyncHandler = fn => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(err => {
-    console.error(err);
-    res.status(500).json({ message: err.message || 'Server error' });
-  });
-};
+const asyncHandler = require('../middleware/asyncHandler');
+const upload = require('../middleware/uploadMiddleware');
+const validateRequest = require('../middleware/validateRequest');
+const { signupSchema, signinSchema } = require('../utils/validationSchemas');
 
 // Public routes
-router.post('/signup', asyncHandler(signup));
-router.post('/signin', asyncHandler(signin));
+
+router.post('/signup', upload.single('profilePic'), validateRequest(signupSchema), asyncHandler(signup));
+router.post('/signin', validateRequest(signinSchema), asyncHandler(signin));
 router.post('/logout', asyncHandler(logout));
 router.post('/forgot-password', asyncHandler(forgotPassword));
 
