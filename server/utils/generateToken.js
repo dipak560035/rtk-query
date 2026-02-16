@@ -1,24 +1,3 @@
-// const jwt = require('jsonwebtoken');
-
-// const generateAccessToken = (userId) => {
-//     return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
-//         expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
-//     });
-// };
-
-// const generateRefreshToken = (userId) => {
-//     return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
-//         expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
-//     });
-// };
-
-// module.exports = { generateAccessToken, generateRefreshToken };
-
-
-
-
-
-
 
 
 const jwt = require("jsonwebtoken");
@@ -28,7 +7,6 @@ const generateAccessToken = (userId) => {
     expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "5m",
   });
 };
-
 const generateRefreshToken = (userId) => {
   return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d",
