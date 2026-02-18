@@ -10,6 +10,10 @@ import authRoutes from './routes/auth.routes.js'
 import productRoutes from './routes/product.routes.js'
 import cartRoutes from './routes/cart.routes.js'
 import orderRoutes from './routes/order.routes.js'
+import { requireAuth, requireAdmin } from './middleware/auth.js'
+import { runValidation } from './middleware/validate.js'
+import { body, param } from 'express-validator'
+import { adminUpdateOrderStatus } from './controllers/order.controller.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -58,6 +62,15 @@ app.use('/auth', authRoutes)
 app.use('/products', productRoutes)
 app.use('/cart', cartRoutes)
 app.use('/orders', orderRoutes)
+
+// Admin alias for updating order status to match requested endpoint
+app.put(
+  '/admin/orders/:id/status',
+  requireAuth,
+  requireAdmin,
+  runValidation([param('id').isMongoId(), body('status').isString()]),
+  adminUpdateOrderStatus
+)
 
 app.use(notFoundHandler)
 app.use(errorHandler)

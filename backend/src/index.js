@@ -52,19 +52,13 @@ const __dirname = path.dirname(__filename)
 // Load .env explicitly (guarantees it works in ES modules)
 dotenv.config({ path: path.join(__dirname, '../.env') })
 
-// Optional debug
-console.log('SMTP_USER:', process.env.SMTP_USER)
-console.log('SMTP_PASS:', process.env.SMTP_PASS ? 'PASS LOADED' : 'PASS MISSING')
 
-// =====================================
-// PORT CONFIG
-// =====================================
+
+
 const PREFERRED = Number(process.env.PORT || 4001)
 const CANDIDATE_PORTS = [PREFERRED, PREFERRED + 1, PREFERRED + 2]
 
-// =====================================
-// START SERVER
-// =====================================
+
 ;(async () => {
   try {
     // Connect to MongoDB
