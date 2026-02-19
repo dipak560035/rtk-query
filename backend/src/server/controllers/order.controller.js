@@ -368,10 +368,12 @@ export const adminGetAllOrders = async (req, res) => {
 
 
 
+
 // export const adminUpdateOrderStatus = async (req, res) => {
 //   try {
 //     const { status } = req.body;
 
+//     // Allowed statuses
 //     const validStatuses = [
 //       "pending",
 //       "paid",
@@ -381,35 +383,35 @@ export const adminGetAllOrders = async (req, res) => {
 //       "cancelled",
 //     ];
 
+//     // Validate status
 //     if (!validStatuses.includes(status)) {
 //       return res.status(400).json({ message: "Invalid order status" });
 //     }
 
+//     // Find order by ID
 //     const order = await Order.findById(req.params.id);
 //     if (!order) return res.status(404).json({ message: "Order not found" });
 
-//     // Only prevent cancelling shipped/delivered
-//     if (status === "cancelled" && ["shipped", "delivered"].includes(order.status)) {
-//       return res.status(400).json({ message: `Cannot cancel an order already ${order.status}` });
-//     }
-
-//     // Update status
+//     // Admin can now change any status including shipped/delivered
 //     order.status = status;
 
 //     // Automatically update flags
-//     if (status === "delivered") {
-//       order.isDelivered = true;
-//       order.deliveredAt = new Date();
-//     }
-//     if (status === "paid") {
-//       order.isPaid = true;
-//       order.paidAt = new Date();
+//     order.isPaid = status === "paid" ? true : order.isPaid;
+//     order.isDelivered = status === "delivered" ? true : order.isDelivered;
+//     if (status === "cancelled") {
+//       // Restore stock only if order was not shipped/delivered
+//       if (!order.isDelivered && !order.isShipped) {
+//         for (const item of order.items) {
+//           await Product.findByIdAndUpdate(item.product, {
+//             $inc: { stock: item.qty },
+//           });
+//         }
+//       }
 //     }
 
 //     await order.save();
 
-//     await order.populate("user", "name email phone")
-//                .populate("items.product", "name price images");
+//     await order.populate("user", "name email phone").populate("items.product", "name price images");
 
 //     res.json({ success: true, data: order });
 //   } catch (error) {
@@ -417,60 +419,48 @@ export const adminGetAllOrders = async (req, res) => {
 //     res.status(500).json({ message: "Internal server error" });
 //   }
 // };
-
-
-
-
-// ================================
-// ADMIN - UPDATE ORDER STATUS (FULLY ENABLED)
-// ================================
 export const adminUpdateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    // Allowed statuses
-    const validStatuses = [
-      "pending",
-      "paid",
-      "processing",
-      "shipped",
-      "delivered",
-      "cancelled",
-    ];
-
-    // Validate status
+    const validStatuses = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: "Invalid order status" });
+      return res.status(400).json({ message: 'Invalid order status' });
     }
 
-    // Find order by ID
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    // Admin can now change any status including shipped/delivered
+    // Handle cancellation stock restore
+    if (status === 'cancelled' && !['shipped', 'delivered'].includes(order.status)) {
+      await Promise.all(
+        order.items.map(item =>
+          Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } })
+        )
+      );
+    }
+
+    // Update order status and flags
     order.status = status;
-
-    // Automatically update flags
-    order.isPaid = status === "paid" ? true : order.isPaid;
-    order.isDelivered = status === "delivered" ? true : order.isDelivered;
-    if (status === "cancelled") {
-      // Restore stock only if order was not shipped/delivered
-      if (!order.isDelivered && !order.isShipped) {
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.qty },
-          });
-        }
-      }
+    if (status === 'paid') {
+      order.isPaid = true;
+      order.paidAt = order.paidAt || new Date();
+    }
+    if (status === 'delivered') {
+      order.isDelivered = true;
+      order.deliveredAt = order.deliveredAt || new Date();
     }
 
     await order.save();
 
-    await order.populate("user", "name email phone").populate("items.product", "name price images");
+    await order.populate([
+      { path: 'user', select: 'name email phone' },
+      { path: 'items.product', select: 'name price images' }
+    ]);
 
     res.json({ success: true, data: order });
   } catch (error) {
-    console.error("Admin update order status error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error('Admin update order status error:', error.message);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
