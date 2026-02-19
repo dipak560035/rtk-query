@@ -7,6 +7,8 @@ const {
   logout,
   forgotPassword,
   resetPassword,
+  getUserById,
+  
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
@@ -29,16 +31,14 @@ router.get('/reset-password/:token', (req, res) => {
 });
 
 
-// POST route to handle form submission from browser
+
 router.post('/reset-password/:token', asyncHandler(resetPassword));
 
-// PUT route to handle API/Postman requests
+
 router.put('/reset-password/:token', asyncHandler(resetPassword));
 
+//me
 
-// Protected routes
-router.get('/me', protect, asyncHandler(async (req, res) => {
-  res.status(200).json(req.user);
-}));
+router.get('/me', protect, asyncHandler(getUserById));
 
 module.exports = router;
