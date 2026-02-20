@@ -1,21 +1,19 @@
-require("reflect-metadata");
+
 require("dotenv").config();
-
 const { DataSource } = require("typeorm");
-
-const User = require("./entities/User");
-const Token = require("./entities/Token");
 
 const AppDataSource = new DataSource({
   type: "postgres",
-  host: "localhost",
-  port: 5432,
-  username: "postgres",
-  password: "dipak8080",
-  database: "postgress_test",
-  synchronize: true,   // auto-create tables (dev only)
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+
+  synchronize: true,   // auto create tables 
   logging: false,
-  entities: [User, Token],
+
+  entities: [__dirname + "/entities/*.js"],
 });
 
 module.exports = AppDataSource;

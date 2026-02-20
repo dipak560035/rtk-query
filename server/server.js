@@ -56,7 +56,7 @@ const path = require('path');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 
-// ✅ Import TypeORM DataSource
+//  Import TypeORM DataSource
 const AppDataSource = require('./data-source');
 
 const app = express();
@@ -84,17 +84,17 @@ app.get('/', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// ✅ Connect PostgreSQL + Start server
+//  Connect PostgreSQL + Start server
 const port = process.env.PORT || 5000;
 
 AppDataSource.initialize()
   .then(() => {
-    console.log('✅ PostgreSQL connected successfully');
+    console.log(' PostgreSQL connected successfully');
 
     app.listen(port, () => {
       console.log(`Server started on port ${port}`);
     });
   })
   .catch((err) => {
-    console.error('❌ Error connecting to PostgreSQL:', err);
+    console.error(' Error connecting to PostgreSQL:', err);
   });

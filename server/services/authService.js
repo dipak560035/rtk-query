@@ -61,27 +61,32 @@
 
 
 const bcrypt = require("bcryptjs");
-const AppDataSource = require("../data-source");
+
+const AppDataSource = require("../data-source"); //typeorm data source,db connection
 
 const { generateAccessToken, generateRefreshToken } = require("../utils/generateToken");
 
 const userRepo = () => AppDataSource.getRepository("User");
+
 const tokenRepo = () => AppDataSource.getRepository("Token");
+//database table handlers for User and Token entities
 
 
 // SIGNUP
 const signup = async (userData) => {
     const { name, email, password, profilePic } = userData;
+    
 
     const userExists = await userRepo().findOne({
         where: { email }
     });
+    // instead of SELECT * FROM User
 
     if (userExists) {
         throw new Error("User already exists");
     }
 
-    // hash password manually (no mongoose pre-save now)
+    // hash password manually 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await userRepo().save({
@@ -89,6 +94,7 @@ const signup = async (userData) => {
         email,
         password: hashedPassword,
         profilePic
+        //INSERT INTO user ......
     });
 
     const accessToken = generateAccessToken(user.id);
@@ -108,7 +114,7 @@ const signin = async (email, password) => {
 
     const user = await userRepo().findOne({
         where: { email },
-        relations: ["tokens"]   // optional, safe
+        relations: ["tokens"] 
     });
 
     if (!user) {
