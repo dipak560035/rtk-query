@@ -20,23 +20,48 @@ const __dirname = path.dirname(__filename)
 
 const app = express()
 
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'http://localhost:5180',
-  "https://mern-frontened-git-figma-design-dipak560035s-projects.vercel.app"
-].filter(Boolean)
+// const allowedOrigins = [
+//   process.env.CLIENT_URL,
+//   'http://localhost:5180',
+//   "https://mern-frontened-git-figma-design-dipak560035s-projects.vercel.app"
+// ].filter(Boolean)
 
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin) return callback(null, true)
+//       if (allowedOrigins.includes(origin)) return callback(null, true)
+//       return callback(new Error('Not allowed by CORS'))
+//     },
+//     credentials: true,
+//     optionsSuccessStatus: 200
+//   })
+// )
+const allowedOrigins = [
+  'http://localhost:5180', // local dev
+  'https://mern-frontened-git-figma-design-dipak560035s-projects.vercel.app', // production
+];
+
+// CORS middleware
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true)
-      if (allowedOrigins.includes(origin)) return callback(null, true)
-      return callback(new Error('Not allowed by CORS'))
+      if (!origin) return callback(null, true); // allow Postman, curl, or server-to-server requests
+
+      // Allow exact matches
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Allow any Vercel preview deployments
+      if (origin.endsWith('.vercel.app')) return callback(null, true);
+
+      console.log('Blocked by CORS:', origin);
+      return callback(new Error('Not allowed by CORS'));
     },
-    credentials: true,
-    optionsSuccessStatus: 200
+    credentials: true, // needed if you use cookies or auth
+    optionsSuccessStatus: 200,
   })
-)
+);
+
 app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
