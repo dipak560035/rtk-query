@@ -8,13 +8,13 @@ const router = Router()
 
 router.use(requireAuth)
 
+router.get('/admin/all', requireAdmin, adminGetAllOrders)
+router.put('/admin/:id', requireAdmin, runValidation([param('id').isMongoId(), body('status').isString()]), adminUpdateOrderStatus)
+
 router.post('/', runValidation([body('shippingAddress').optional().isObject()]), placeOrder)
 router.get('/', getMyOrders)
 router.get('/:id', runValidation([param('id').isMongoId()]), getOrderById)
 router.patch('/:id/cancel', runValidation([param('id').isMongoId()]), cancelOrder)
-
-router.get('/admin/all', requireAdmin, adminGetAllOrders)
-router.put('/admin/:id', requireAdmin, runValidation([param('id').isMongoId(), body('status').isString()]), adminUpdateOrderStatus)
 
 export default router
 
