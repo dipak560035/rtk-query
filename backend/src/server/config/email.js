@@ -20,15 +20,24 @@ export const getTransporter = () => {
       console.warn('⚠️ SMTP_USER or SMTP_PASS is missing. Emails will fail until set in .env')
     }
 
+    // transporter = nodemailer.createTransport({
+    //   host: SMTP_HOST,
+    //   port: Number(SMTP_PORT),
+    //   secure: Number(SMTP_PORT) === 465, // true for port 465, false for 587
+    //   auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    //   tls: {
+    //     rejectUnauthorized: NODE_ENV === 'production'
+    //   }
+    // })
     transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT),
-      secure: Number(SMTP_PORT) === 465, // true for port 465, false for 587
-      auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-      tls: {
-        rejectUnauthorized: NODE_ENV === 'production'
-      }
-    })
+  host: SMTP_HOST,
+  port: Number(SMTP_PORT),
+  secure: Number(SMTP_PORT) === 465,
+  auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+  tls: {
+    rejectUnauthorized: false // <-- allow Render to connect even if certs are strict
+  }
+})
   }
   return transporter
 }
