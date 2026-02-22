@@ -36,7 +36,7 @@ async function testEmail() {
   try {
     console.log('Verifying connection...')
     await transporter.verify()
-    console.log('✅ SMTP Connection Verified!')
+    console.log(' SMTP Connection Verified!')
 
     console.log('Sending test email...')
     const info = await transporter.sendMail({
@@ -47,10 +47,10 @@ async function testEmail() {
       html: '<b>If you see this, email sending is working!</b>'
     })
 
-    console.log('✅ Email sent successfully!')
+    console.log('Email sent successfully!')
     console.log('Message ID:', info.messageId)
   } catch (err) {
-    console.error('❌ Error occurred:', err)
+    console.error(' Error occurred:', err)
   }
 }
 

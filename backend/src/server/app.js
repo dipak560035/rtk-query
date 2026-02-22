@@ -20,23 +20,6 @@ const __dirname = path.dirname(__filename)
 
 const app = express()
 
-// const allowedOrigins = [
-//   process.env.CLIENT_URL,
-//   'http://localhost:5180',
-//   "https://mern-frontened-git-figma-design-dipak560035s-projects.vercel.app"
-// ].filter(Boolean)
-
-// app.use(
-//   cors({
-//     origin: (origin, callback) => {
-//       if (!origin) return callback(null, true)
-//       if (allowedOrigins.includes(origin)) return callback(null, true)
-//       return callback(new Error('Not allowed by CORS'))
-//     },
-//     credentials: true,
-//     optionsSuccessStatus: 200
-//   })
-// )
 const allowedOrigins = [
   'http://localhost:5180', // local dev
   'https://mern-frontened-git-figma-design-dipak560035s-projects.vercel.app', // production
