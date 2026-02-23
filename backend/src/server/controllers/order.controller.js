@@ -4,18 +4,14 @@ import Order from "../models/Order.js";
 import { Product } from "../models/Product.js";
 import { User } from "../models/User.js";
 
-/* ================================
-   PLACE ORDER
-================================ */
+// place order
 export const placeOrder = async (req, res) => {
   try {
     const userId = req.user._id;
     const shipping = req.body.shippingAddress || {};
     const paymentMethod = req.body.paymentMethod || "COD";
 
-    /* ------------------------------
-       Validate Shipping First
-    ------------------------------ */
+  // Validate required shipping fields
     if (
       !shipping.firstName ||
       !shipping.lastName ||
@@ -30,9 +26,7 @@ export const placeOrder = async (req, res) => {
       });
     }
 
-    /* ------------------------------
-       Get Cart (Logged User)
-    ------------------------------ */
+// Get cart items and validate stock
     const cart = await Cart.findOne({ user: userId }).populate(
       "items.product"
     );
@@ -40,9 +34,7 @@ export const placeOrder = async (req, res) => {
     let items = [];
     let total = 0;
 
-    /* ------------------------------
-       CASE 1: Cart exists
-    ------------------------------ */
+   // Case 1: User has a cart with items
     if (cart && cart.items.length > 0) {
       for (const item of cart.items) {
         const product = item.product;
@@ -70,9 +62,7 @@ export const placeOrder = async (req, res) => {
         });
       }
     }
-    /* ------------------------------
-       CASE 2: Guest order (body items)
-    ------------------------------ */
+    // Case 2: No cart or empty cart - fallback to items from request body (for direct order placement)
     else {
       const bodyItems = Array.isArray(req.body.items)
         ? req.body.items
@@ -118,9 +108,7 @@ export const placeOrder = async (req, res) => {
       }
     }
 
-    /* ------------------------------
-       Create Order
-    ------------------------------ */
+   // Create order
     const order = await Order.create({
       user: userId,
       items,
@@ -140,18 +128,14 @@ export const placeOrder = async (req, res) => {
       status: "pending",
     });
 
-    /* ------------------------------
-       Reduce Stock
-    ------------------------------ */
+   // Decrease stock
     for (const item of items) {
       await Product.findByIdAndUpdate(item.product, {
         $inc: { stock: -item.qty },
       });
     }
 
-    /* ------------------------------
-       Clear Cart
-    ------------------------------ */
+   // Clear cart
     if (cart && cart.items.length > 0) {
       cart.items = [];
       await cart.save();
@@ -170,9 +154,7 @@ export const placeOrder = async (req, res) => {
   }
 };
 
-/* ================================
-   GET MY ORDERS
-================================ */
+// get my orders
 export const getMyOrders = async (req, res) => {
   try {
     // If user is admin, they might expect to see all orders or just theirs.
@@ -193,9 +175,7 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-/* ================================
-   GET ORDER BY ID
-================================ */
+// get order by id
 export const getOrderById = async (req, res) => {
   try {
     let order
@@ -232,9 +212,7 @@ export const getOrderById = async (req, res) => {
   }
 };
 
-/* ================================
-   CANCEL ORDER
-================================ */
+// cancel order
 export const cancelOrder = async (req, res) => {
   try {
     let order
@@ -274,81 +252,7 @@ export const cancelOrder = async (req, res) => {
   }
 };
 
-/* ================================
-   ADMIN - GET ALL ORDERS
-================================ */
-// export const adminGetAllOrders = async (req, res) => {
-//   try {
-//     const orders = await Order.find()
-//       .populate("user", "name email") // Keeping phone optional if not in schema, but prompt said "name email phone"
-//       .populate("items.product", "name price images")
-//       .sort({ createdAt: -1 });
 
-//     // Sanitize orders to ensure user is never null for frontend safety
-//     const sanitizedOrders = orders.map(order => {
-//       const orderObj = order.toObject();
-//       if (!orderObj.user) {
-//         orderObj.user = {
-//           _id: null,
-//           name: "Unknown User (Deleted)",
-//           email: "N/A",
-//           phone: "N/A"
-//         };
-//       }
-//       return orderObj;
-//     });
-
-//     res.json({ success: true, data: sanitizedOrders });
-//   } catch (error) {
-//     console.error("Admin get all orders error:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
-// /* ================================
-//    ADMIN - UPDATE ORDER STATUS
-// ================================ */
-// export const adminUpdateOrderStatus = async (req, res) => {
-//   try {
-//     const { status } = req.body;
-
-//     const validStatuses = [
-//       "pending",
-//       "paid",
-//       "processing",
-//       "shipped",
-//       "delivered",
-//       "cancelled",
-//     ];
-
-//     if (!validStatuses.includes(status)) {
-//       return res.status(400).json({ message: "Invalid order status" });
-//     }
-
-//     const order = await Order.findByIdAndUpdate(
-//       req.params.id,
-//       { status },
-//       { new: true }
-//     )
-//       .populate("user", "name email phone")
-//       .populate("items.product", "name price images");
-
-//     if (!order) {
-//       return res.status(404).json({ message: "Order not found" });
-//     }
-
-//     res.json({
-//       success: true,
-//       data: !order.user ? {
-//         ...order.toObject(),
-//         user: { _id: null, name: "Unknown User", email: "N/A" }
-//       } : order
-//     });
-//   } catch (error) {
-//     console.error("Admin update order status error:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
 export const adminGetAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
@@ -365,60 +269,6 @@ export const adminGetAllOrders = async (req, res) => {
 
 
 
-
-
-
-
-// export const adminUpdateOrderStatus = async (req, res) => {
-//   try {
-//     const { status } = req.body;
-
-//     // Allowed statuses
-//     const validStatuses = [
-//       "pending",
-//       "paid",
-//       "processing",
-//       "shipped",
-//       "delivered",
-//       "cancelled",
-//     ];
-
-//     // Validate status
-//     if (!validStatuses.includes(status)) {
-//       return res.status(400).json({ message: "Invalid order status" });
-//     }
-
-//     // Find order by ID
-//     const order = await Order.findById(req.params.id);
-//     if (!order) return res.status(404).json({ message: "Order not found" });
-
-//     // Admin can now change any status including shipped/delivered
-//     order.status = status;
-
-//     // Automatically update flags
-//     order.isPaid = status === "paid" ? true : order.isPaid;
-//     order.isDelivered = status === "delivered" ? true : order.isDelivered;
-//     if (status === "cancelled") {
-//       // Restore stock only if order was not shipped/delivered
-//       if (!order.isDelivered && !order.isShipped) {
-//         for (const item of order.items) {
-//           await Product.findByIdAndUpdate(item.product, {
-//             $inc: { stock: item.qty },
-//           });
-//         }
-//       }
-//     }
-
-//     await order.save();
-
-//     await order.populate("user", "name email phone").populate("items.product", "name price images");
-
-//     res.json({ success: true, data: order });
-//   } catch (error) {
-//     console.error("Admin update order status error:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
 export const adminUpdateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;

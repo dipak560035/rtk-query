@@ -198,7 +198,7 @@ export async function forgotPassword(req, res, next) {
 
     await user.save()
 
-    // const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5180'}/reset-password/${resetToken}`
+    
     const CLIENT_URL =
   process.env.NODE_ENV === 'production'
     ? process.env.CLIENT_URL // should point to Vercel frontend
