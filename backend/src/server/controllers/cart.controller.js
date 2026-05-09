@@ -6,6 +6,24 @@ import { Product } from '../models/Product.js';
 export const getCart = async (req, res) => {
   try {
     let cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
+import { Cart } from '../models/cart.js';
+import { Product } from '../models/Product.js';
+
+// get cart
+export const getCart = async (req, res) => {
+  try {
+    let cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
+
+    if (!cart) {
+      cart = await Cart.create({ user: req.user._id, items: [] });
+    }
+
+    res.json({ success: true, data: cart });
+  } catch (err) {
+    console.error("Get cart error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
     if (!cart) {
       cart = await Cart.create({ user: req.user._id, items: [] });
